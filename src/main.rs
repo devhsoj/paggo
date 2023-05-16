@@ -51,7 +51,7 @@ impl Cache {
         Ok(range)
     }
 
-    fn get(self: &Self, key: String) -> Option<Vec<u8>> {
+    fn get(self: &Self, key: String) -> Option<&[u8]> {
         let range_entry = self.mapping.get(&key);
 
         if range_entry.is_none() {
@@ -59,21 +59,32 @@ impl Cache {
         }
 
         let range = range_entry.unwrap();
-        let mut vec: Vec<u8> = Vec::new();
 
-        for c in &self.buffer[range.0..range.1] {
-            vec.push(*c);
-        }
-
-        Some(vec)
+        Some(&self.buffer[range.0..range.1])
     }
 
     fn exists(self: &Self, key: String) -> Option<&(usize, usize)> {
         self.mapping.get(&key)
     }
-
 }
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let mut allocated: usize = 0;
 
+    if args.len() < 2 {
+        allocated = 1 * 1_024 * 1_024; // 1 mb
+    } else {
+        let memory_arg = &args[1];
+
+        match memory_arg.parse::<usize>() {
+            Ok(v) => allocated = v * 1_024 * 1_024,
+            Err(_) => println!("{} is not a valid memory value! must be in mb", memory_arg)
+        }
+    }
+
+    let mut cache = Cache {
+        buffer: vec![0; allocated],
+        mapping: HashMap::new()
+    };
 }
