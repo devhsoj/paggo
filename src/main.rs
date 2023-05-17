@@ -1,22 +1,21 @@
-use std::{env, collections::HashMap};
+use std::{env};
 
 struct Cache {
     buffer: Vec<u8>,
-    mapping: HashMap<String, (usize, usize)>
+    mapping: Vec<(String, (usize, usize))>
 }
 
 impl Cache {
     fn next_index(self: &Self) -> usize {
-        let keys: Vec<&String> = self.mapping.keys().map(|key| key).collect();
-        let keys_length = keys.len();
+        let keys_length = self.mapping.len();
 
         if keys_length == 0 {
             return 0;
         }
 
-        let last_key = keys[keys_length - 1];
+        let (_, range) = &self.mapping[keys_length - 1];
 
-        self.mapping.get(last_key).expect("Failed to retrieve last key!").1
+        range.1
     }
 
     fn set(self: &mut Self, key: String, data: &Vec<u8>) -> Result<(usize, usize), String> {
@@ -46,25 +45,37 @@ impl Cache {
         let end = start + data_length;
         let range = (start, end);
 
-        self.mapping.insert(key, range);
+        self.mapping.push((key, range));
 
         Ok(range)
     }
 
     fn get(self: &Self, key: String) -> Option<&[u8]> {
-        let range_entry = self.mapping.get(&key);
+        let mut range: Option<&(usize, usize)> = None;
 
-        if range_entry.is_none() {
+        for i in 0..self.mapping.len() {
+            if key == self.mapping[i].0 {
+                range = Some(&self.mapping[i].1);
+            }
+        }
+
+        if range.is_none() {
             return None;
         }
 
-        let range = range_entry.unwrap();
+        let indexes = range.unwrap();
 
-        Some(&self.buffer[range.0..range.1])
+        Some(&self.buffer[indexes.0..indexes.1])
     }
 
     fn exists(self: &Self, key: String) -> Option<&(usize, usize)> {
-        self.mapping.get(&key)
+        for i in 0..self.mapping.len() {
+            if key == self.mapping[i].0 {
+                return Some(&self.mapping[i].1);
+            }
+        }
+
+        None
     }
 }
 
@@ -85,6 +96,6 @@ fn main() {
 
     let mut cache = Cache {
         buffer: vec![0; allocated],
-        mapping: HashMap::new()
+        mapping: vec![]
     };
 }
