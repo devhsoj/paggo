@@ -18,7 +18,7 @@ impl Cache {
         range.1
     }
 
-    fn set(self: &mut Self, key: String, data: &Vec<u8>) -> Result<(usize, usize), String> {
+    fn set(self: &mut Self, key: String, data: &[u8]) -> Result<(usize, usize), String> {
         let data_length = data.len();
         let mut start = self.next_index();
 
@@ -38,9 +38,7 @@ impl Cache {
             ));
         }
 
-        for i in 0..data_length {
-            self.buffer[start + i] = data[i];
-        }
+        self.buffer[start..start + data_length].clone_from_slice(data);
 
         let end = start + data_length;
         let range = (start, end);
