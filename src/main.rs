@@ -154,8 +154,8 @@ async fn main() -> io::Result<()> {
                     }
 
                     let command = Command::from_u8(buf[0]);
-                    let key = String::from_utf8_lossy(&buf[1..33]).trim_end_matches(char::from(0)).to_string();
-                    let data = &buf[33..];
+                    let key = String::from_utf8_lossy(&buf[1..max_key_size + 1]).trim_end_matches(char::from(0)).to_string();
+                    let data = &buf[max_key_size + 1..];
 
                     match command {
                         Command::QUIT => {
