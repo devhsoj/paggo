@@ -186,6 +186,7 @@ async fn main() -> io::Result<()> {
                 }
 
                 println!("[-] {:?}", addr);
+
                 Ok::<(), io::Error>(())
             }
         });
