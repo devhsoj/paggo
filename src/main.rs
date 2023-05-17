@@ -80,11 +80,11 @@ impl Cache {
 
 #[derive(Debug)]
 enum Command {
-    UNKNOWN = 255,
     QUIT = 1,
     GET = 2,
     SET = 3,
     EXISTS = 4,
+    UNKNOWN = 255
 }
 
 impl Command {
@@ -103,20 +103,27 @@ impl Command {
 async fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut allocated: usize = 1_024 * 1_024; // 1 mb
+    let mut max_key_size: usize = 32; // 32 b
     let mut max_value_size: usize = 1_024; // 1 kb
 
     if args.len() >= 3 {
         let alloc_arg = &args[1];
-        let value_arg = &args[2];
+        let key_arg = &args[2];
+        let value_arg = &args[3];
 
         match alloc_arg.parse::<usize>() {
             Ok(v) => allocated = v * 1_024 * 1_024,
-            Err(_) => println!("{} is not a valid value for allocated memory! must be in mb. eg: 1mb", alloc_arg)
+            Err(_) => println!("{} is not a valid value for allocated memory! must be in mb. eg: 1 = 1 mb, 1000 = 1,000 mb (1 gb)", alloc_arg)
+        }
+
+        match key_arg.parse::<usize>() {
+            Ok(v) => max_key_size = v,
+            Err(_) => println!("{} is not a valid value for the max key size! must be in kb. eg: 1 = 1 b, 1000 = 1000 b (1 kb)", alloc_arg)
         }
 
         match value_arg.parse::<usize>() {
             Ok(v) => max_value_size = v * 1_024,
-            Err(_) => println!("{} is not a valid value for the max value size! must be in kb. eg: 1kb", alloc_arg)
+            Err(_) => println!("{} is not a valid value for the max value size! must be in kb. eg: 1 = 1 kb, 1000 = 1000 kb (1 mb)", alloc_arg)
         }
     }
 
@@ -139,7 +146,7 @@ async fn main() -> io::Result<()> {
 
             async move {
                 loop {
-                    let mut buf = vec![0 as u8; 1 + 32 + max_value_size];
+                    let mut buf = vec![0 as u8; 1 + max_key_size + max_value_size];
                     let n = socket.read(&mut buf).await?;
 
                     if n == 0 && buf[0] == 0 {
