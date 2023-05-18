@@ -6,7 +6,7 @@ struct Cache {
 }
 
 impl Cache {
-    fn set(self: &mut Self, key: String, data: &[u8]) {
+    fn set(&mut self, key: String, data: &[u8]) {
         self.data.insert(key, data.to_vec());
     }
 
@@ -18,7 +18,7 @@ impl Cache {
         self.data.contains_key(&key)
     }
 
-    fn delete(self: &mut Self, key: String) {
+    fn delete(&mut self, key: String) {
         self.data.remove(&key);
     }
 }
@@ -67,12 +67,12 @@ async fn main() -> io::Result<()> {
 
         match key_arg.parse::<usize>() {
             Ok(v) => max_key_size = v,
-            Err(_) => panic!("{key_arg} is not a valid value for the max key size! must be in kb. eg: 1 = 1 b, 1000 = 1000 b (1 kb)")
+            Err(_) => panic!("{key_arg} is not a valid value for the max key size! must be in kb. eg: 1 (1 b)")
         }
 
         match value_arg.parse::<usize>() {
             Ok(v) => max_value_size = v * 1_024,
-            Err(_) => panic!("{value_arg} is not a valid value for the max value size! must be in kb. eg: 1 = 1 kb, 1000 = 1000 kb (1 mb)")
+            Err(_) => panic!("{value_arg} is not a valid value for the max value size! must be in kb. eg: 1 (1 kb)")
         }
     }
 
