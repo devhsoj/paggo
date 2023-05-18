@@ -1,28 +1,6 @@
 use std::{env, sync::Arc, collections::HashMap};
 use tokio::{io::{self, AsyncReadExt, AsyncWriteExt}, net::TcpListener, sync::Mutex};
 
-struct Cache {
-    data: HashMap<String, Vec<u8>>
-}
-
-impl Cache {
-    fn set(&mut self, key: String, data: &[u8]) {
-        self.data.insert(key, data.to_vec());
-    }
-
-    fn get(&self, key: String) -> Option<&Vec<u8>> {
-        self.data.get(&key)
-    }
-
-    fn exists(&self, key: String) -> bool {
-        self.data.contains_key(&key)
-    }
-
-    fn delete(&mut self, key: String) {
-        self.data.remove(&key);
-    }
-}
-
 #[derive(Debug)]
 enum Command {
     QUIT = 1,
@@ -51,8 +29,8 @@ async fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
 
     let mut address = "127.0.0.1:9055".to_string();
-    let mut max_key_size: usize = 32; // 32 b
-    let mut max_value_size: usize = 1_024; // 1 kb
+    let mut max_key_size: usize = 32; // default: 32 b
+    let mut max_value_size: usize = 1_024; // default: 1 kb
 
     if args.len() >= 4 {
         let addr_arg = &args[1];
@@ -60,26 +38,23 @@ async fn main() -> io::Result<()> {
         let value_arg = &args[3];
 
         if addr_arg.len() == 0 || !addr_arg.contains(":") {
-            panic!("{addr_arg} is not a valid value for listen address! must be in format of <hostname>:<port>. eg: 127.0.0.1:9055");
+            panic!("{addr_arg} is not a valid value for listen address! must be in the format of <hostname>:<port>. eg: 127.0.0.1:9055");
         }
 
         address = addr_arg.clone();
 
         match key_arg.parse::<usize>() {
             Ok(v) => max_key_size = v,
-            Err(_) => panic!("{key_arg} is not a valid value for the max key size! must be in kb. eg: 1 (1 b)")
+            Err(_) => panic!("{key_arg} is not a valid value for the max key size! must be in bytes. eg: 1 (would be 1 b)")
         }
 
         match value_arg.parse::<usize>() {
             Ok(v) => max_value_size = v * 1_024,
-            Err(_) => panic!("{value_arg} is not a valid value for the max value size! must be in kb. eg: 1 (1 kb)")
+            Err(_) => panic!("{value_arg} is not a valid value for the max value size! must be in bytes. eg: 1024 (would be 1 kb)")
         }
     }
 
-    let cache = Arc::new(Mutex::new(Cache {
-        data: HashMap::new()
-    }));
-
+    let cache: Arc<Mutex<HashMap<String, Vec<u8>>>> = Arc::new(Mutex::new(HashMap::new()));
     let listener = TcpListener::bind(address.clone()).await?;
 
     println!("[i] listening on {}", address.clone());
@@ -112,22 +87,22 @@ async fn main() -> io::Result<()> {
                             socket.shutdown().await?;
                         },
                         Command::GET => {
-                            match cache.lock().await.get(key) {
+                            match cache.lock().await.get(&key) {
                                 Some(res) => socket.write_all(res).await?,
                                 None => socket.write_all(&[0]).await?
                             }
                         },
                         Command::SET => {
-                            cache.lock().await.set(key, data);
+                            cache.lock().await.insert(key, data.to_vec());
                             socket.write_all(&[1]).await?;
                         },
                         Command::EXISTS => {
-                            let exists = cache.lock().await.exists(key);
+                            let exists = cache.lock().await.contains_key(&key);
 
                             socket.write_all(if exists { &[1] } else { &[0] }).await?;
                         },
                         Command::DELETE => {
-                            cache.lock().await.delete(key);
+                            cache.lock().await.remove(&key);
                             socket.write_all(&[1]).await?;
                         },
                         Command::UNKNOWN => socket.write_all(&"UNKNOWN".as_bytes()).await?,
