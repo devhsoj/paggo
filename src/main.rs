@@ -32,6 +32,8 @@ async fn main() -> io::Result<()> {
     let mut max_key_size: usize = 32; // default: 32 b
     let mut max_value_size: usize = 1_024; // default: 1 kb
 
+    let mut key_start = max_key_size + 1;
+
     if args.len() >= 4 {
         let addr_arg = &args[1];
         let key_arg = &args[2];
@@ -46,6 +48,10 @@ async fn main() -> io::Result<()> {
         match key_arg.parse::<usize>() {
             Ok(v) => max_key_size = v,
             Err(_) => panic!("{key_arg} is not a valid value for the max key size! must be in bytes. eg: 1 (would be 1 b)")
+        }
+
+        if max_key_size == 1 {
+            key_start = 1;
         }
 
         match value_arg.parse::<usize>() {
@@ -78,7 +84,7 @@ async fn main() -> io::Result<()> {
 
                     let command = Command::from_u8(buf[0]);
                     let key = String::from_utf8_lossy(&buf[1..max_key_size + 1]).trim_end_matches(char::from(0)).to_string();
-                    let data = &buf[max_key_size + 1..n];
+                    let data = &buf[key_start..n];
 
                     match command {
                         Command::QUIT => {
