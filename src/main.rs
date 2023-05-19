@@ -49,7 +49,7 @@ async fn main() -> io::Result<()> {
         }
 
         match value_arg.parse::<usize>() {
-            Ok(v) => max_value_size = v * 1_024,
+            Ok(v) => max_value_size = v,
             Err(_) => panic!("{value_arg} is not a valid value for the max value size! must be in bytes. eg: 1024 (would be 1 kb)")
         }
     }
