@@ -4,8 +4,6 @@ A small, fast, and safe in-memory database.
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
-
 ```bash
 git clone https://github.com/devhsoj/paggo.git
 cargo build --release
