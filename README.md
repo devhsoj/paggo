@@ -18,7 +18,7 @@ cargo build --release
 ./path/to/paggo
 
 # listens on 0.0.0.0:3333, max key size: 256 b, max value size: 1 mb
-./path/to/paggo 0.0.0.0:3333 256 1000
+./path/to/paggo 0.0.0.0:3333 256 1000000
 ```
 
 ## License
