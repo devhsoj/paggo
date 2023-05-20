@@ -1,27 +1,12 @@
-use std::{env, sync::Arc, collections::HashMap};
-use tokio::{io::{self, AsyncReadExt, AsyncWriteExt}, net::TcpListener, sync::Mutex};
+mod command;
 
-#[derive(Debug)]
-enum Command {
-    QUIT = 1,
-    GET = 2,
-    SET = 3,
-    EXISTS = 4,
-    DELETE = 5,
-    UNKNOWN = 255
-}
+use tokio::{io::{self, AsyncReadExt, AsyncWriteExt}, net::TcpListener};
+use std::{env, sync::Arc};
+use dashmap::DashMap;
+use command::Command;
 
-impl Command {
-    fn from_u8(c: u8) -> Command {
-        match c {
-            1 => Command::QUIT,
-            2 => Command::GET,
-            3 => Command::SET,
-            4 => Command::EXISTS,
-            5 => Command::DELETE,
-            _ => Command::UNKNOWN,
-        }
-    }
+fn decode_key(buf: &[u8]) -> String {
+    String::from_utf8_lossy(&buf).trim_end_matches(char::from(0)).to_string()
 }
 
 #[tokio::main]
@@ -60,7 +45,7 @@ async fn main() -> io::Result<()> {
         }
     }
 
-    let cache: Arc<Mutex<HashMap<String, Vec<u8>>>> = Arc::new(Mutex::new(HashMap::new()));
+    let cache: Arc<DashMap<String, Vec<u8>>> = Arc::new(DashMap::new());
     let listener = TcpListener::bind(address.clone()).await?;
 
     println!("[i] listening on {}", address.clone());
@@ -71,7 +56,8 @@ async fn main() -> io::Result<()> {
         println!("[+] {:?}", addr);
 
         tokio::spawn({
-            let cache = cache.clone();
+
+            let cache = Arc::clone(&cache);
 
             async move {
                 loop {
@@ -83,35 +69,54 @@ async fn main() -> io::Result<()> {
                     }
 
                     let command = Command::from_u8(buf[0]);
-                    let key = String::from_utf8_lossy(&buf[1..max_key_size + 1]).trim_end_matches(char::from(0)).to_string();
-                    let data = &buf[key_start..n];
 
-                    match command {
+                    let res = match command {
+                        Command::PING => {
+                            socket.write_all(&[1]).await
+                        },
                         Command::QUIT => {
                             println!("[-] {:?}", addr);
 
-                            socket.shutdown().await?;
+                            socket.shutdown().await
                         },
                         Command::GET => {
-                            match cache.lock().await.get(&key) {
-                                Some(res) => socket.write_all(res).await?,
-                                None => socket.write_all(&[0]).await?
+                            let key = decode_key(&buf[1..max_key_size + 1]);
+
+                            match cache.get(&key) {
+                                Some(res) => socket.write_all(&res).await,
+                                None => socket.write_all(&[0]).await
                             }
                         },
                         Command::SET => {
-                            cache.lock().await.insert(key, data.to_vec());
-                            socket.write_all(&[1]).await?;
+                            let key = decode_key(&buf[1..max_key_size + 1]);
+                            let data = &buf[key_start..n];
+
+                            cache.insert(key, data.to_vec());
+                            socket.write_all(&[1]).await
                         },
                         Command::EXISTS => {
-                            let exists = cache.lock().await.contains_key(&key);
+                            let key = decode_key(&buf[1..max_key_size + 1]);
+                            let exists = cache.contains_key(&key);
 
-                            socket.write_all(if exists { &[1] } else { &[0] }).await?;
+                            socket.write_all(if exists { &[1] } else { &[0] }).await
                         },
                         Command::DELETE => {
-                            cache.lock().await.remove(&key);
-                            socket.write_all(&[1]).await?;
+                            let key = decode_key(&buf[1..max_key_size + 1]);
+
+                            cache.remove(&key);
+                            socket.write_all(&[1]).await
                         },
-                        Command::UNKNOWN => socket.write_all(&"UNKNOWN".as_bytes()).await?,
+                        Command::UNKNOWN => socket.write_all(&"UNKNOWN".as_bytes()).await,
+                    };
+
+                    match res {
+                        Ok(()) => (),
+                        Err(e) => {
+                            eprintln!("{}", e.to_string());
+
+                            socket.write_all(&[0]).await?;
+                            socket.shutdown().await?;
+                        }
                     }
                 }
 
