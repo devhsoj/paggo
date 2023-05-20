@@ -69,8 +69,6 @@ impl PaggoInstance {
 
                         match command {
                             Command::QUIT => {
-                                println!("[-] {:?}", addr);
-
                                 socket.shutdown().await?;
                             }
                             Command::GET => match cache.get(&key) {
