@@ -93,6 +93,7 @@ impl PaggoInstance {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug)]
 pub enum Command {
     QUIT = 1,
