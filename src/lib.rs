@@ -10,11 +10,16 @@ use tokio::{
     net::TcpListener,
 };
 
-/// Runs an instance of the Paggo database with the specified settings. 
+/// Runs an instance of the Paggo database with the specified settings.
+#[derive(clap::Parser, Debug)]
+#[command(author = "devhsoj", version = env!("CARGO_PKG_VERSION"), about = "A simple database server implementation.", long_about = None)]
 pub struct PaggoInstance {
-    port: u16,
-    max_key_size: usize,
-    max_value_size: usize,
+    #[arg(default_value_t = 9055)]
+    pub(crate) port: u16,
+    #[arg(default_value_t = 32)]
+    pub(crate) max_key_size: usize,
+    #[arg(default_value_t = 1024)]
+    pub(crate) max_value_size: usize,
 }
 
 impl PaggoInstance {
