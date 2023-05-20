@@ -1,3 +1,7 @@
+//! # Paggo
+//!
+//! This crate exports [Paggo], allowing the creation custom instances for it and integrating it on existing services.
+
 use std::{io, net::Ipv6Addr, sync::Arc};
 
 use dashmap::DashMap;
@@ -6,10 +10,7 @@ use tokio::{
     net::TcpListener,
 };
 
-/// # Paggo
-///
-/// This crate exports [Paggo], allowing creating custom instances for it and integrating it on existing services.
-
+/// Runs an instance of the Paggo database with the specified settings. 
 pub struct PaggoInstance {
     port: u16,
     max_key_size: usize,
@@ -17,6 +18,8 @@ pub struct PaggoInstance {
 }
 
 impl PaggoInstance {
+    /// Creates a new [`PaggoInstance`]. Takes the port Paggo should run on, the maximum key length, and the maximum
+    /// value length.
     pub fn new(port: u16, max_key_size: usize, max_value_size: usize) -> Self {
         Self {
             port,
@@ -25,6 +28,7 @@ impl PaggoInstance {
         }
     }
 
+    /// Runs the [`PaggoInstance`] until an error is encountered.
     pub async fn run(self: &Arc<Self>) -> Result<(), io::Error> {
         let listener =
             TcpListener::bind((Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1), self.port)).await?;
@@ -88,6 +92,7 @@ impl PaggoInstance {
     }
 }
 
+/// Represents a command that can be given to Paggo.
 #[repr(u8)]
 #[derive(Debug)]
 pub enum Command {
