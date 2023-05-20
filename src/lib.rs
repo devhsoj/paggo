@@ -2,7 +2,7 @@
 //!
 //! This crate exports [Paggo], allowing the creation custom instances for it and integrating it on existing services.
 
-use std::{io, net::Ipv6Addr, sync::Arc};
+use std::{io, net::Ipv6Addr, sync::Arc, mem::transmute};
 
 use dashmap::DashMap;
 use tokio::{
@@ -112,13 +112,10 @@ pub enum Command {
 
 impl Command {
     pub fn from_u8(c: u8) -> Command {
-        match c {
-            1 => Command::QUIT,
-            2 => Command::GET,
-            3 => Command::SET,
-            4 => Command::EXISTS,
-            5 => Command::DELETE,
-            _ => Command::UNKNOWN,
+        if c <= 5 { // with rust nightly this would be `c <= std::mem::variant_count::<Self>() - 1`
+            unsafe { transmute(c) }
+        } else {
+            Self::UNKNOWN
         }
     }
 }
