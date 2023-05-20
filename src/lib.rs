@@ -72,9 +72,7 @@ impl PaggoInstance {
                                 socket.write_all(&[1]).await?;
                             }
                             Command::EXISTS => {
-                                let exists = cache.contains_key(&key);
-
-                                socket.write_all(if exists { &[1] } else { &[0] }).await?;
+                                socket.write_all(&[cache.contains_key(&key) as u8]).await?;
                             }
                             Command::DELETE => {
                                 cache.remove(&key);
