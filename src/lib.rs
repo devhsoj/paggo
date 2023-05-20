@@ -10,6 +10,9 @@ use tokio::{
     net::TcpListener,
 };
 
+const SUCCESS: u8 = 1;
+const ERROR: u8 = 0;
+
 /// Runs an instance of the Paggo database with the specified settings.
 #[derive(Debug)]
 #[cfg_attr(feature = "cli", derive(clap::Parser))]
@@ -73,20 +76,20 @@ impl PaggoInstance {
                             }
                             Command::GET => match cache.get(&key) {
                                 Some(res) => socket.write_all(res.value()).await?,
-                                None => socket.write_all(&[0]).await?,
+                                None => socket.write_all(&[ERROR]).await?,
                             },
                             Command::SET => {
                                 cache.insert(key, data.to_vec());
-                                socket.write_all(&[1]).await?;
+                                socket.write_all(&[SUCCESS]).await?;
                             }
                             Command::EXISTS => {
                                 socket.write_all(&[cache.contains_key(&key) as u8]).await?;
                             }
                             Command::DELETE => {
                                 cache.remove(&key);
-                                socket.write_all(&[1]).await?;
+                                socket.write_all(&[SUCCESS]).await?;
                             }
-                            Command::UNKNOWN => socket.write_all("UNKNOWN".as_bytes()).await?,
+                            Command::UNKNOWN => socket.write_all(&[ERROR]).await?,
                         }
                     }
                     // Help type checker
