@@ -17,9 +17,10 @@ exclude = [".github/"]
 [dependencies]
 clap = { version = "4.3.0", features = ["derive"], optional = true }
 dashmap = "5.4.0"
-tokio = { version = "1.28.1", features = ["full"] }
+tokio = { version = "1.28.1", features = ["net", "bytes", "mio", "io-std", "io-util", "macros", "rt", "rt-multi-thread"] }
 
 [features]
 default = ["cli"]
 cli = ["clap"]
+
 
