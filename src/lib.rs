@@ -46,7 +46,7 @@ impl PaggoInstance {
         };
 
         loop {
-            let (mut socket, addr) = listener.accept().await?;
+            let (mut socket, _) = listener.accept().await?;
             let cache = cache.clone();
             let self_ref = self.clone();
 
