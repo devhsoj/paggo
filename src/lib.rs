@@ -11,14 +11,15 @@ use tokio::{
 };
 
 /// Runs an instance of the Paggo database with the specified settings.
-#[derive(clap::Parser, Debug)]
-#[command(author = "devhsoj", version = env!("CARGO_PKG_VERSION"), about = "A simple database server implementation.", long_about = None)]
+#[derive(Debug)]
+#[cfg_attr(feature = "cli", derive(clap::Parser))]
+#[cfg_attr(feature = "cli", command(author = "devhsoj", version = env!("CARGO_PKG_VERSION"), about = "A simple database server implementation.", long_about = None))]
 pub struct PaggoInstance {
-    #[arg(default_value_t = 9055)]
+    #[cfg_attr(feature = "cli", arg(default_value_t = 9055))]
     pub(crate) port: u16,
-    #[arg(default_value_t = 32)]
+    #[cfg_attr(feature = "cli", arg(default_value_t = 32))]
     pub(crate) max_key_size: usize,
-    #[arg(default_value_t = 1024)]
+    #[cfg_attr(feature = "cli", arg(default_value_t = 1024))]
     pub(crate) max_value_size: usize,
 }
 
