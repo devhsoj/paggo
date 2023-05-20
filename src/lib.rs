@@ -57,7 +57,7 @@ impl PaggoInstance {
                             vec![0u8; 1 + self_ref.max_key_size + self_ref.max_value_size];
                         let n = socket.read(&mut buf).await?;
 
-                        if n == 0 && buf[0] == 0 {
+                        if n == 0 && buf[0] == Command::QUIT as u8 {
                             exit(0)
                         }
 
