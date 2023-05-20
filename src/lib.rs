@@ -2,7 +2,7 @@
 //!
 //! This crate exports [Paggo], allowing the creation custom instances for it and integrating it on existing services.
 
-use std::{io, net::Ipv6Addr, sync::Arc, mem::transmute};
+use std::{io, net::Ipv6Addr, sync::Arc, mem::transmute, process::exit};
 
 use dashmap::DashMap;
 use tokio::{
@@ -58,7 +58,7 @@ impl PaggoInstance {
                         let n = socket.read(&mut buf).await?;
 
                         if n == 0 && buf[0] == 0 {
-                            break;
+                            exit(0)
                         }
 
                         let command = Command::from_u8(buf[0]);
@@ -91,6 +91,8 @@ impl PaggoInstance {
                             Command::UNKNOWN => socket.write_all("UNKNOWN".as_bytes()).await?,
                         }
                     }
+                    // Help type checker
+                    #[allow(unreachable_code)]
                     Ok::<(), io::Error>(())
                 }
             });
