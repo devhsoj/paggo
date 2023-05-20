@@ -81,9 +81,6 @@ impl PaggoInstance {
                             Command::UNKNOWN => socket.write_all("UNKNOWN".as_bytes()).await?,
                         }
                     }
-
-                    println!("[-] {:?}", addr);
-
                     Ok::<(), io::Error>(())
                 }
             });
