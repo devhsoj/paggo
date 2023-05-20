@@ -1,7 +1,16 @@
 [package]
 name = "paggo"
+license = ""
 version = "0.1.0"
 edition = "2021"
+description = "A simple database server implementation."
+authors = ["Joshua Benfield"]
+homepage = "https://github.com/devhsoj/paggo"
+repository = "https://github.com/devhsoj/paggo"
+readme = "./README.md"
+keywords = ["database", "server", "redis"]
+categories = ["asynchronous", "database-implementations"]
+exclude = [".github/"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
