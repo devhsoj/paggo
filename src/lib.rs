@@ -44,7 +44,7 @@ impl PaggoInstance {
                 async move {
                     loop {
                         let mut buf =
-                            vec![0 as u8; 1 + self_ref.max_key_size + self_ref.max_value_size];
+                            vec![0u8; 1 + self_ref.max_key_size + self_ref.max_value_size];
                         let n = socket.read(&mut buf).await?;
 
                         if n == 0 && buf[0] == 0 {
@@ -80,7 +80,7 @@ impl PaggoInstance {
                                 cache.lock().await.remove(&key);
                                 socket.write_all(&[1]).await?;
                             }
-                            Command::UNKNOWN => socket.write_all(&"UNKNOWN".as_bytes()).await?,
+                            Command::UNKNOWN => socket.write_all("UNKNOWN".as_bytes()).await?,
                         }
                     }
 
