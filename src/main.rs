@@ -2,7 +2,7 @@
 #[cfg(feature = "cli")]
 use clap::Parser;
 use paggo::PaggoInstance;
-use std::{sync::Arc, process::exit};
+use std::{process::exit, sync::Arc};
 use tokio::io;
 
 #[tokio::main]
