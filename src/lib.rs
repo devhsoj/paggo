@@ -113,7 +113,7 @@ pub enum Command {
 
 impl Command {
     pub fn from_u8(c: u8) -> Command {
-        if c <= 5 { // with rust nightly this would be `c <= std::mem::variant_count::<Self>() - 1`
+        if c <= 5 { // with rust nightly this would be `c < std::mem::variant_count::<Self>()`
             unsafe { transmute(c) }
         } else {
             Self::UNKNOWN
