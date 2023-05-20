@@ -1,9 +1,9 @@
-use std::{collections::HashMap, io, net::Ipv6Addr, sync::Arc};
+use std::{io, net::Ipv6Addr, sync::Arc};
 
+use dashmap::DashMap;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpListener,
-    sync::Mutex,
 };
 
 /// # Paggo
@@ -28,7 +28,7 @@ impl PaggoInstance {
     pub async fn run(self: &Arc<Self>) -> Result<(), io::Error> {
         let listener =
             TcpListener::bind((Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1), self.port)).await?;
-        let cache: Arc<Mutex<HashMap<String, Vec<u8>>>> = Arc::new(Mutex::new(HashMap::new()));
+        let cache = DashMap::<String, Vec<u8>>::new();
         let key_start = if self.max_key_size == 1 {
             self.max_key_size
         } else {
@@ -63,21 +63,21 @@ impl PaggoInstance {
 
                                 socket.shutdown().await?;
                             }
-                            Command::GET => match cache.lock().await.get(&key) {
-                                Some(res) => socket.write_all(res).await?,
+                            Command::GET => match cache.get(&key) {
+                                Some(res) => socket.write_all(res.value()).await?,
                                 None => socket.write_all(&[0]).await?,
                             },
                             Command::SET => {
-                                cache.lock().await.insert(key, data.to_vec());
+                                cache.insert(key, data.to_vec());
                                 socket.write_all(&[1]).await?;
                             }
                             Command::EXISTS => {
-                                let exists = cache.lock().await.contains_key(&key);
+                                let exists = cache.contains_key(&key);
 
                                 socket.write_all(if exists { &[1] } else { &[0] }).await?;
                             }
                             Command::DELETE => {
-                                cache.lock().await.remove(&key);
+                                cache.remove(&key);
                                 socket.write_all(&[1]).await?;
                             }
                             Command::UNKNOWN => socket.write_all("UNKNOWN".as_bytes()).await?,
