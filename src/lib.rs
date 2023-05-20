@@ -71,9 +71,6 @@ impl PaggoInstance {
                         let data = &buf[key_start..n];
 
                         match command {
-                            Command::QUIT => {
-                                socket.shutdown().await?;
-                            }
                             Command::GET => match cache.get(&key) {
                                 Some(res) => socket.write_all(res.value()).await?,
                                 None => socket.write_all(&[ERROR]).await?,
@@ -88,6 +85,12 @@ impl PaggoInstance {
                             Command::DELETE => {
                                 cache.remove(&key);
                                 socket.write_all(&[SUCCESS]).await?;
+                            }
+                            Command::PING => {
+                                socket.write_all(&[SUCCESS]).await?;
+                            }
+                            Command::QUIT => {
+                                socket.shutdown().await?;
                             }
                             Command::UNKNOWN => socket.write_all(&[ERROR]).await?,
                         }
@@ -108,12 +111,13 @@ pub enum Command {
     SET = 3,
     EXISTS = 4,
     DELETE = 5,
+    PING = 6,
     UNKNOWN = 255,
 }
 
 impl Command {
     pub fn from_u8(c: u8) -> Command {
-        if c <= 5 { // with rust nightly this would be `c < std::mem::variant_count::<Self>()`
+        if c <= 6 { // with rust nightly this would be `c < std::mem::variant_count::<Self>()`
             unsafe { transmute(c) }
         } else {
             Self::UNKNOWN
