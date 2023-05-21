@@ -5,9 +5,8 @@ use std::{env, sync::Arc};
 use dashmap::DashMap;
 use command::Command;
 
-fn decode_key(buf: &[u8]) -> String {
-    String::from_utf8_lossy(&buf).trim_end_matches(char::from(0)).to_string()
-}
+const SUCCESS: [u8; 1] = [1];
+const FAILURE: [u8; 1] = [0];
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
@@ -61,7 +60,7 @@ async fn main() -> io::Result<()> {
 
             async move {
                 loop {
-                    let mut buf = vec![0 as u8; 1 + max_key_size + max_value_size];
+                    let mut buf = vec![0u8; 1 + max_key_size + max_value_size];
                     let n = socket.read(&mut buf).await?;
 
                     if n == 0 && buf[0] == 0 {
@@ -69,10 +68,11 @@ async fn main() -> io::Result<()> {
                     }
 
                     let command = Command::from_u8(buf[0]);
+                    let key = String::from_utf8_lossy(&buf[1..max_key_size + 1]).trim_end_matches(char::from(0)).to_string();
 
                     let res = match command {
                         Command::PING => {
-                            socket.write_all(&[1]).await
+                            socket.write_all(&SUCCESS).await
                         },
                         Command::QUIT => {
                             println!("[-] {:?}", addr);
@@ -80,31 +80,26 @@ async fn main() -> io::Result<()> {
                             socket.shutdown().await
                         },
                         Command::GET => {
-                            let key = decode_key(&buf[1..max_key_size + 1]);
-
                             match cache.get(&key) {
                                 Some(res) => socket.write_all(&res).await,
-                                None => socket.write_all(&[0]).await
+                                None => socket.write_all(&FAILURE).await
                             }
                         },
                         Command::SET => {
-                            let key = decode_key(&buf[1..max_key_size + 1]);
                             let data = &buf[key_start..n];
 
-                            cache.insert(key, data.to_vec());
-                            socket.write_all(&[1]).await
+                            cache.insert(key.clone(), data.to_vec());
+
+                            socket.write_all(&SUCCESS).await
                         },
                         Command::EXISTS => {
-                            let key = decode_key(&buf[1..max_key_size + 1]);
                             let exists = cache.contains_key(&key);
 
-                            socket.write_all(if exists { &[1] } else { &[0] }).await
+                            socket.write_all(if exists { &SUCCESS } else { &FAILURE }).await
                         },
                         Command::DELETE => {
-                            let key = decode_key(&buf[1..max_key_size + 1]);
-
                             cache.remove(&key);
-                            socket.write_all(&[1]).await
+                            socket.write_all(&SUCCESS).await
                         },
                         Command::UNKNOWN => socket.write_all(&"UNKNOWN".as_bytes()).await,
                     };
@@ -114,7 +109,7 @@ async fn main() -> io::Result<()> {
                         Err(e) => {
                             eprintln!("{}", e.to_string());
 
-                            socket.write_all(&[0]).await?;
+                            socket.write_all(&FAILURE).await?;
                             socket.shutdown().await?;
                         }
                     }
