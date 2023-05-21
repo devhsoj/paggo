@@ -88,7 +88,7 @@ async fn main() -> io::Result<()> {
                         Command::SET => {
                             let data = &buf[key_start..n];
 
-                            cache.insert(key.clone(), data.to_vec());
+                            cache.insert(key, data.to_vec());
 
                             socket.write_all(&SUCCESS).await
                         },
