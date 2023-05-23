@@ -16,7 +16,7 @@ const ERROR: u8 = 0;
 /// Runs an instance of the Paggo database with the specified settings.
 #[derive(Debug)]
 #[cfg_attr(feature = "cli", derive(clap::Parser))]
-#[cfg_attr(feature = "cli", command(author = "devhsoj", version = env!("CARGO_PKG_VERSION"), about = "A simple database server implementation.", long_about = None))]
+#[cfg_attr(feature = "cli", command(author = "devhsoj", version = env!("CARGO_PKG_VERSION"), about = "A small, fast, and safe in-memory database.", long_about = None))]
 pub struct PaggoInstance {
     #[cfg_attr(feature = "cli", arg(default_value_t = 9055))]
     pub(crate) port: u16,
