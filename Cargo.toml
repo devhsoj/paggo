@@ -1,10 +1,26 @@
 [package]
 name = "paggo"
+license = "MIT"
 version = "0.1.0"
 edition = "2021"
+description = "A simple database server implementation."
+authors = ["Joshua Benfield"]
+homepage = "https://github.com/devhsoj/paggo"
+repository = "https://github.com/devhsoj/paggo"
+readme = "./README.md"
+keywords = ["database", "server", "redis"]
+categories = ["asynchronous", "database-implementations"]
+exclude = [".github/"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dashmap = { version = "5.4.0", features = [] }
-tokio = { version = "1", features = ["net", "bytes", "mio", "io-std", "io-util", "macros", "rt", "rt-multi-thread"] }
+clap = { version = "4.3.0", features = ["derive"], optional = true }
+dashmap = "5.4.0"
+tokio = { version = "1.28.1", features = ["net", "bytes", "mio", "io-std", "io-util", "macros", "rt", "rt-multi-thread"] }
+
+[features]
+default = ["cli"]
+cli = ["clap"]
+
+
